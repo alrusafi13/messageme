@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:messageme_app/screens/chat_screen.dart';
 import 'package:messageme_app/widgets/my_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:messageme_app/widgets/my_text.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -17,123 +18,91 @@ class _SignInScreenState extends State<SignInScreen> {
   late String email;
   late String password;
   bool showspinner = false;
-
+  final formkey = GlobalKey<FormState>();
+  final scaffoidkey = GlobalKey<ScaffoldState>();
+  TextEditingController _controlleremail = TextEditingController();
+  TextEditingController _controllerpass = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoidkey,
       backgroundColor: Colors.white,
       body: ModalProgressHUD(
         inAsyncCall: showspinner,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                height: 180,
-                child: Image.asset('images/proj.png'),
-              ),
-              SizedBox(height: 50),
-              TextField(
-                keyboardType: TextInputType.emailAddress,
-                textAlign: TextAlign.center,
-                onChanged: (value) {
-                  email = value;
-                },
-                decoration: InputDecoration(
-                  hintText: 'Enter your Email',
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 20,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(10),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Colors.red[900]!,
-                      width: 1,
-                    ),
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(10),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Colors.black,
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(10),
-                    ),
-                  ),
+          child: Form(
+            key: formkey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  height: 180,
+                  child: Image.asset('images/proj.png'),
                 ),
-              ),
-              SizedBox(height: 8),
-              TextField(
-                obscureText: true,
-                textAlign: TextAlign.center,
-                onChanged: (value) {
-                  password = value;
-                },
-                decoration: InputDecoration(
+                SizedBox(height: 50),
+                RoundedInputField(
+                    hintText: 'Enter your Email',
+                    controller: _controlleremail,
+                    validator: (value) {
+                      if (value!.isEmpty ||
+                          !RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+                              .hasMatch(value)) {
+                        return 'Enter correct email ';
+                      } else {
+                        return null;
+                      }
+                    }),
+                SizedBox(height: 8),
+                RoundedInputField(
+                  obscureText: true,
+                  textAlign: TextAlign.center,
+                  onChanged: (value) {
+                    password = value;
+                  },
                   hintText: 'Enter your password',
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 20,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(10),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Colors.red[900]!,
-                      width: 1,
-                    ),
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(10),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Colors.black,
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 10),
-              MyButton(
-                color: Colors.red[900]!,
-                title: 'Sign in',
-                onPressed: () async {
-                  setState(() {
-                    showspinner = true;
-                  });
-                  try {
-                    final user = await _auth.signInWithEmailAndPassword(
-                        email: email, password: password);
-                    // ignore: unnecessary_null_comparison
-                    if (user != null) {
-                      Navigator.pushNamed(context, ChatScreen.screenRoute);
-                      setState(() {
-                        showspinner = false;
-                      });
+                  controller: _controllerpass,
+                  validator: (value) {
+                    if (value!.isEmpty ||
+                        !RegExp(r'^[+]*[)}{0,1}[0-9]{1,4}[)}{0,1}[-\s\./0-9]+$')
+                            .hasMatch(value)) {
+                      return 'Enter correct password ';
+                    } else {
+                      return null;
                     }
-                  } catch (e) {
-                    print(e);
-                  }
-                },
-              )
-            ],
+                  },
+                ),
+                SizedBox(height: 10),
+                MyButton(
+                  color: Colors.red[900]!,
+                  title: 'Sign in',
+                  onPressed: () async {
+                    setState(() {
+                      showspinner = true;
+                    });
+                    try {
+                      final user = await _auth.signInWithEmailAndPassword(
+                          email: _controlleremail.text,
+                          password: _controllerpass.text);
+                      // ignore: unnecessary_null_comparison
+                      if (formkey.currentState!.validate()) {
+                        Navigator.pushNamed(context, ChatScreen.screenRoute);
+                        setState(() {
+                          showspinner = false;
+                        });
+                      }
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('e'),
+                        ),
+                      );
+                    }
+                  },
+                )
+              ],
+            ),
           ),
         ),
       ),
